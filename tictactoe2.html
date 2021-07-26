@@ -80,14 +80,19 @@
         background-color: gray;
     }
 
-    .buttons {}
+    .row {
+        display: flex;
+        flex-direction: row;
+    }
 
     .cell {
         background-color: white;
         text-align: center;
         height: auto;
-        width: auto;
+        width: 33%;
         font-size: 75px;
+        margin-left: 1%;
+        margin-right: 1%;
     }
 </style>
 
@@ -162,9 +167,11 @@
                     </svg>
                 </button>
             </div>
-            <div class='board' :style="{ 'grid-template-columns': 'repeat('+ boardsize.x + ',1fr)' }">
-                <div class="cell" v-for="(cell, index) in (boardsize.y*boardsize.x)" @click="makemove(index)">
-                    {{mainboard[index]}}
+            <div class='board'>
+                <div class="row" v-for="(row, i) in (boardsize.y)">
+                    <div class='cell' v-for="(cell, j) in (boardsize.x)" @click="makemove(i,j)">
+                        {{mainboard[i][j]}}
+                    </div>
                 </div>
             </div>
             <button @click='--page'>go back</button>
@@ -182,12 +189,12 @@
                 plr: {
                     ltr: "X",
                     name: "",
-                    score: undefined
+                    score: 0
                 },
                 enemy: {
                     ltr: "O",
                     name: "",
-                    score: undefined
+                    score: 0
                 },
                 page: 1,
                 tempboard: [],
@@ -205,18 +212,23 @@
             createmainboard() {
                 app.page += 1
                 var array = []
-                for (let i = 0; i < (app.boardsize.y * app.boardsize.x); i++) {
-                    array.push(null)
+                for (let i = 0; i < (app.boardsize.y); i++) {
+                    array.push([])
+                    for (let j = 0; j < (app.boardsize.x); j++) {
+                        array[array.length - 1].push(null)
+                    }
+                    array[-1]
                 }
+                console.log(array);
                 app.mainboard = array
                 // app.tempboard = app.mainboard
             },
-            makemove(index) {
-                if (app.mainboard[index] === null) { /*Check that cell is empty*/
-                    app.mainboard[index] = app.ltrturn;
+            makemove(row, cell) {
+                if (app.mainboard[row][cell] === null) { /*Check that cell is empty*/
+                    app.mainboard[row][cell] = app.ltrturn;
                     app.error = null
                     app.move += 1
-                    app.movelog[app.move] = [index, app.ltrturn]
+                    app.movelog[app.move] = [row, cell, app.ltrturn]
                     //Delete previous movelog
                     for (let i = app.move + 1; i < Object.keys(app.movelog).length + 2; i++) {
                         delete app.movelog[i];
@@ -230,13 +242,14 @@
                         }
                     } else if (app.enemytype == "comp") {
                         while (app.boardemptycells > 0) {
-                            compmove = Math.floor(Math.random() * (app.boardsize.y * app.boardsize.x))
-                            if (app.mainboard[compmove] === null) {
+                            compmove_x = Math.floor(Math.random() * app.boardsize.x)
+                            compmove_y = Math.floor(Math.random() * app.boardsize.y)
+                            if (app.mainboard[compmove_y][compmove_x] === null) {
                                 app.move += 1
-                                app.movelog[app.move] = [compmove, "O"]
-                                app.mainboard[compmove] = "O"
+                                app.movelog[app.move] = [compmove_y, compmove_x, "O"]
+                                app.mainboard[compmove_y][compmove_x] = "O"
                                 break
-                            } else if (app.mainboard) { }
+                            }
                         }
                     }
 
@@ -245,17 +258,46 @@
                 }
             },
             checkwin() {
-                for (let i = 0; i < app.mainboard.length; i++) {
-                    try {
-                        if (app.mainboard[i] != null) {
-                            let checkLtr = app.mainboard[i]
-                            if (app.mainboard[i]) {
-
+                for (let i = 0; i < app.boardsize.y; i++) {
+                    for (let j = 0; j < app.boardsize.x; j++) {
+                        try {
+                            if (app.mainboard[i][j] != null) {
+                                let checkLtr = app.mainboard[i][j]
+                                if (app.mainboard[i + 1][j] == checkLtr) {
+                                    if (app.mainboard[i + 2][j] == checkLtr) {
+                                        if (app.plr.ltr == checkLtr) {
+                                            app.plr.score += 1
+                                        }
+                                        else if (app.enemy.ltr == checkLtr) {
+                                            app.enemy.score += 1
+                                        }
+                                    }
+                                }
+                                if (app.mainboard[i][j + 1] == checkLtr) {
+                                    if (app.mainboard[i][j + 2] == checkLtr) {
+                                        if (app.plr.ltr == checkLtr) {
+                                            app.plr.score += 1
+                                        }
+                                        else if (app.enemy.ltr == checkLtr) {
+                                            app.enemy.score += 1
+                                        }
+                                    }
+                                }
                             }
+                        } catch (error) {
+                            console.log(error);
                         }
-                    } catch (error) {
-
                     }
+                }
+                if (app.boardsize.x == 3 && app.boardsize.y == 3) {
+                    console.log("CHECK");
+                    if (app.plr.score > 0) {
+                        console.log("player won");
+                    }
+                    else if (app.enemy.score > 0) {
+                        console.log("COMPUTER WON")
+                    }
+
                 }
             },
             movelogfunc(direction) {
@@ -293,10 +335,12 @@
         computed: {
             boardemptycells() {
                 var counter = 0;
-                for (let i = 0; i < app.mainboard.length; i++) {
-                    const cell = app.mainboard[i];
-                    if (cell === null) {
-                        counter += 1
+                for (let i = 0; i < app.boardsize.y; i++) {
+                    for (let j = 0; j < app.boardsize.x; j++) {
+                        const cell = app.mainboard[i][j];
+                        if (cell === null) {
+                            counter += 1
+                        }
                     }
                 }
                 return counter
