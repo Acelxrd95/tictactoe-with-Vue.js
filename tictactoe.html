@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Tic Tac Toe</title>
+	<style>
+		.board {
+			display: grid;
+			display: grid;
+			grid-gap: 10px;
+			height: 600px;
+			width: 600px;
+			background-color: gray;
+		}
+
+		.buttons {}
+
+		.cell {
+			background-color: white;
+			text-align: center;
+			height: auto;
+			width: auto;
+			font-size: 75px;
+		}
+	</style>
+</head>
+
+<body>
+	<div id='game'>
+		<div v-if="ready">
+			<div v-if="error">{{ error }}</div>
+			<div class="buttons">
+				<button @click="movelogfunc('back')">
+					<svg viewBox="0 0 256 512" width="20" title="angle-left">
+						<path
+							d="M31.7 239l136-136c9.4-9.4 24.6-9.4 33.9 0l22.6 22.6c9.4 9.4 9.4 24.6 0 33.9L127.9 256l96.4 96.4c9.4 9.4 9.4 24.6 0 33.9L201.7 409c-9.4 9.4-24.6 9.4-33.9 0l-136-136c-9.5-9.4-9.5-24.6-.1-34z" />
+					</svg>
+				</button>
+				<button @click="movelogfunc('forward')">
+					<svg viewBox="0 0 256 512" width="20" title="angle-right">
+						<path
+							d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z" />
+					</svg>
+				</button>
+			</div>
+			<div class='board' :style="{ 'grid-template-columns': 'repeat('+ boardsize.x + ',1fr)' }">
+				<div class="cell" v-for="(cell, index) in (boardsize.y*boardsize.x)" @click="makemove(index)"
+					:key="index">
+					{{mainboard[index]}}
+				</div>
+			</div>
+			<button @click='ready= !ready'>go back</button>
+		</div>
+		<div v-else>
+			<h1>Welcome to Tic Tac Toe</h1>
+			<label for="nameInpt">Player name</label>
+			<input type="text" id="nameInpt" name="nameInpt">
+			<br>
+			<br>
+			<label for="boardsizeInptX">Board Size X</label>
+			<input type="number" id="boardsizeInptX" name="boardsizeInptX" v-model.number="boardsize.x">
+			<label for="boardsizeInptY">Board Size Y</label>
+			<input type="number" id="boardsizeInptY" name="boardsizeInptY" v-model.number="boardsize.y">
+			<br>
+			<br>
+			<label for="enemytype">Choose game mode</label>
+			<input type="text" name="enemytype" id="enemytype">
+			<br>
+			<br>
+			<button @click='ready= !ready'>Start Game</button>
+
+		</div>
+	</div>
+</body>
+<script src="https://unpkg.com/vue@next"></script>
+<script>
+	const board = {
+		data() {
+			return {
+				enemytype: "comp",
+				ltrmove: 'X',
+				plrltr: 'X',
+				ready: true,
+				mainboard: [null, null, null, null, null, null, null, null, null],
+				tempboard: [],
+				boardsize: {
+					x: 3,
+					y: 3
+				},
+				error: null,
+				movelog: {},
+				move: 0,
+			}
+		},
+		methods: {
+			makemove(index) { /* Function Triggered whenever a cell is clicked */
+				if (app.mainboard[index] === null) { /*Check that cell is empty*/
+					app.mainboard[index] = app.ltrmove;
+					app.error = null
+					app.move += 1
+					app.movelog[app.move] = [index, app.ltrmove]
+					for (let i = app.move + 1; i < Object.keys(app.movelog).length + 2; i++) {
+						delete app.movelog[i];
+					}
+					if (app.enemytype == "plr2") { /*Switch ltr if enemy is not comp*/
+						if (app.ltrmove === "X") {
+							app.ltrmove = "O";
+						} else {
+							app.ltrmove = "X";
+						}
+					} else if (app.enemytype == "comp") {
+						// for (let i = 0; i < app.mainboard.length; i++) {
+						// 	if (app.mainboard[i] == )
+
+						// }
+						while (true) {
+							compmove = Math.floor(Math.random() * (app.boardsize.y * app.boardsize.x))
+							if (app.mainboard[compmove] === null) {
+
+								app.move += 1
+								app.movelog[app.move] = [compmove, "O"]
+								app.mainboard[compmove] = "O"
+								break
+							} else if (app.mainboard) { }
+						}
+
+					}
+				} else {/*Displayes error if cell is not empty*/
+					app.error = "Place is already taken"
+				}
+			},
+			movelogfunc(direction) {
+				if (direction === 'back') {
+					app.mainboard[app.movelog[app.move][0]] = null
+					app.move -= 1
+					if (app.enemytype == "plr2") { /*Switch ltr if enemy is not comp*/
+						if (app.ltrmove === "X") {
+							app.ltrmove = "O";
+						} else {
+							app.ltrmove = "X";
+						}
+					}
+				} else if (direction === 'forward') {
+					if (app.movelog[app.move + 1]) {
+						app.move += 1
+						app.mainboard[app.movelog[app.move][0]] = app.movelog[app.move][1]
+						if (app.enemytype == "plr2") { /*Switch ltr if enemy is not comp*/
+							if (app.ltrmove === "X") {
+								app.ltrmove = "O";
+							} else {
+								app.ltrmove = "X";
+							}
+						}
+					}
+				}
+			}
+		},
+	}
+	const app = Vue.createApp(board).mount('#game')
+</script>
+
+</html>
