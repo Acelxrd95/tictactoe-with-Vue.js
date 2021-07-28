@@ -167,6 +167,7 @@
                     </svg>
                 </button>
             </div>
+            <div class="endscreen" v-if='ended'> Game over {{winner}} has won</div>
             <div class='board'>
                 <div class="row" v-for="(row, i) in (boardsize.y)">
                     <div class='cell' v-for="(cell, j) in (boardsize.x)" @click="makemove(i,j)">
@@ -206,6 +207,8 @@
                 ltrturn: 'X',
                 movelog: {},
                 move: 0,
+                ended: false,
+                winner: ""
             }
         },
         methods: {
@@ -224,37 +227,40 @@
                 // app.tempboard = app.mainboard
             },
             makemove(row, cell) {
-                if (app.mainboard[row][cell] === null) { /*Check that cell is empty*/
-                    app.mainboard[row][cell] = app.ltrturn;
-                    app.error = null
-                    app.move += 1
-                    app.movelog[app.move] = [row, cell, app.ltrturn]
-                    //Delete previous movelog
-                    for (let i = app.move + 1; i < Object.keys(app.movelog).length + 2; i++) {
-                        delete app.movelog[i];
-                    }
-                    app.checkwin()
-                    if (app.enemytype == "plr2") { /*Switch ltr if enemy is not comp*/
-                        if (app.ltrturn === "X") {
-                            app.ltrturn = "O";
-                        } else {
-                            app.ltrturn = "X";
+                if (!app.ended) {
+                    if (app.mainboard[row][cell] === null) { /*Check that cell is empty*/
+                        app.mainboard[row][cell] = app.ltrturn;
+                        app.error = null
+                        app.move += 1
+                        app.movelog[app.move] = [row, cell, app.ltrturn]
+                        //Delete previous movelog
+                        for (let i = app.move + 1; i < Object.keys(app.movelog).length + 2; i++) {
+                            delete app.movelog[i];
                         }
-                    } else if (app.enemytype == "comp") {
-                        while (app.boardemptycells > 0) {
-                            compmove_x = Math.floor(Math.random() * app.boardsize.x)
-                            compmove_y = Math.floor(Math.random() * app.boardsize.y)
-                            if (app.mainboard[compmove_y][compmove_x] === null) {
-                                app.move += 1
-                                app.movelog[app.move] = [compmove_y, compmove_x, "O"]
-                                app.mainboard[compmove_y][compmove_x] = "O"
-                                break
+                        app.checkwin()
+                        if (app.enemytype == "plr2") { /*Switch ltr if enemy is not comp*/
+                            if (app.ltrturn === "X") {
+                                app.ltrturn = "O";
+                            } else {
+                                app.ltrturn = "X";
+                            }
+                        } else if (app.enemytype == "comp") {
+                            if (!app.ended) {
+                                while (app.boardemptycells > 0) {
+                                    compmove_x = Math.floor(Math.random() * app.boardsize.x)
+                                    compmove_y = Math.floor(Math.random() * app.boardsize.y)
+                                    if (app.mainboard[compmove_y][compmove_x] === null) {
+                                        app.move += 1
+                                        app.movelog[app.move] = [compmove_y, compmove_x, "O"]
+                                        app.mainboard[compmove_y][compmove_x] = "O"
+                                        break
+                                    }
+                                }
                             }
                         }
+                    } else {/*Displayes error if cell is not empty*/
+                        app.error = "Place is already taken"
                     }
-
-                } else {/*Displayes error if cell is not empty*/
-                    app.error = "Place is already taken"
                 }
             },
             checkwin() {
@@ -292,12 +298,13 @@
                 if (app.boardsize.x == 3 && app.boardsize.y == 3) {
                     console.log("CHECK");
                     if (app.plr.score > 0) {
-                        console.log("player won");
+                        app.ended = true
+                        app.winner = app.plr.name
                     }
                     else if (app.enemy.score > 0) {
-                        console.log("COMPUTER WON")
+                        app.ended = true
+                        app.winner = app.enemy.name
                     }
-
                 }
             },
             movelogfunc(direction) {
